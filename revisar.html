@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+<meta charset="UTF-8">
+<title>Revisar Jugadas</title>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+<div class="contenedor">
+
+<div>
+
+<h1>REVISAR JUGADAS</h1>
+
+<table class="tabla">
+
+<thead>
+
+<tr>
+<th>Lotería</th>
+<th>Número</th>
+<th>Pos</th>
+<th>Importe</th>
+<th>X</th>
+</tr>
+
+</thead>
+
+<tbody id="tablaRevision"></tbody>
+
+</table>
+
+<br><br>
+
+<div class="botones">
+
+<button onclick="anular()">
+ANULAR
+</button>
+
+<button onclick="enviar()">
+ENVIAR JUGADA
+</button>
+
+<button onclick="volver()">
+VOLVER
+</button>
+
+</div>
+
+<h1 id="total"></h1>
+
+</div>
+
+</div>
+
+<script type="module">
+
+// =========================
+// FIREBASE
+// =========================
+
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+getFirestore,
+collection,
+addDoc
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+
+apiKey: "AIzaSyA2y91gOWQX_Or_UNuilOhWmBVPS0vmQSE",
+
+authDomain: "quni-ba5f7.firebaseapp.com",
+
+projectId: "quni-ba5f7",
+
+storageBucket: "quni-ba5f7.firebasestorage.app",
+
+messagingSenderId: "140436996650",
+
+appId: "1:140436996650:web:044d67a93205b244f87953"
+
+};
+
+const app = initializeApp(firebaseConfig);
+
+const db = getFirestore(app);
+
+// =========================
+// VARIABLES
+// =========================
+
+let jugadas =
+JSON.parse(localStorage.getItem('jugadas')) || [];
+
+// =========================
+// RENDER
+// =========================
+
+function render(){
+
+const tabla =
+document.getElementById('tablaRevision');
+
+tabla.innerHTML = '';
+
+let total = 0;
+
+// =========================
+// AGRUPAR
+// =========================
+
+let agrupadas = {};
+
+jugadas.forEach((j,index)=>{
+
+const clave =
+j.numero + '|' +
+j.posicion + '|' +
+j.importe;
+
+if(!agrupadas[clave]){
+
+agrupadas[clave] = {
+
+loterias: [],
+numero: j.numero,
+posicion: j.posicion,
+importe: j.importe,
+indexes: []
+
+};
+
+}
+
+agrupadas[clave].loterias.push(j.loteria);
+
+agrupadas[clave].indexes.push(index);
+
+total += Number(j.importe);
+
+});
+
+// =========================
+// RENDER TABLA
+// =========================
+
+Object.values(agrupadas).forEach(grupo=>{
+
+tabla.innerHTML += `
+<tr>
+
+<td>
+${grupo.loterias.join(' ')}
+</td>
+
+<td>
+${grupo.numero}
+</td>
+
+<td>
+${grupo.posicion}
+</td>
+
+<td>
+${grupo.importe}
+</td>
+
+<td class="celda-check">
+
+<input
+type="checkbox"
+class="check"
+data-indexes='${JSON.stringify(grupo.indexes)}'
+>
+
+</td>
+
+</tr>
+`;
+
+});
+
+document.getElementById('total').innerText =
+'TOTAL: ' + total;
+
+}
+
+// =========================
+// ANULAR
+// =========================
+
+function anular(){
+
+const checks = document.querySelectorAll('.check');
+
+let indexesEliminar = [];
+
+checks.forEach(c=>{
+
+if(c.checked){
+
+const arr =
+JSON.parse(c.dataset.indexes);
+
+indexesEliminar.push(...arr);
+
+}
+
+});
+
+jugadas = jugadas.filter((j,index)=>
+!indexesEliminar.includes(index)
+);
+
+localStorage.setItem(
+'jugadas',
+JSON.stringify(jugadas)
+);
+
+render();
+
+}
+
+// =========================
+// ENVIAR
+// =========================
+
+async function enviar(){
+
+let total = 0;
+
+jugadas.forEach(j=>{
+
+total += Number(j.importe);
+
+});
+
+const fecha = new Date();
+
+// =========================
+// NUMERO TICKET REAL
+// =========================
+
+let ultimoTicket =
+Number(localStorage.getItem('ultimoTicket')) || 3000;
+
+ultimoTicket++;
+
+const numeroTicket = ultimoTicket;
+
+localStorage.setItem(
+'ultimoTicket',
+numeroTicket
+);
+
+// =========================
+// AGRUPAR POR HORARIO
+// =========================
+
+let grupos = {};
+
+jugadas.forEach(j=>{
+
+const horario = j.loteria.slice(-2);
+
+if(!grupos[horario]){
+grupos[horario] = [];
+}
+
+grupos[horario].push(j);
+
+});
+
+// =========================
+// CONTENIDO
+// =========================
+
+let contenido = '';
+
+Object.keys(grupos).forEach(horario=>{
+
+const grupo = grupos[horario];
+
+// =========================
+// LOTERIAS UNICAS
+// =========================
+
+let loteriasUnicas = [];
+
+grupo.forEach(j=>{
+
+let loteria =
+String(j.loteria).trim();
+
+loteria = loteria
+.replace('NAC','N')
+.replace('PRO','P')
+.replace('SFE','S')
+.replace('COR','C')
+.replace('RIO','R')
+.replace('MZA','M')
+.replace('CTE','CT')
+.replace('ORO','O');
+
+if(!loteriasUnicas.includes(loteria)){
+
+loteriasUnicas.push(loteria);
+
+}
+
+});
+
+// =========================
+// LINEA LOTERIAS
+// =========================
+
+let lineaLoterias = '';
+
+loteriasUnicas.forEach((l,index)=>{
+
+lineaLoterias += l + ' ';
+
+if((index + 1) % 6 === 0){
+
+lineaLoterias += '\n';
+
+}
+
+});
+
+// =========================
+// AGRUPAR NUMEROS
+// =========================
+
+let numerosUnicos = {};
+
+grupo.forEach(j => {
+
+const clave =
+String(j.numero).trim() + '|' +
+String(j.posicion).trim() + '|' +
+String(j.importe).trim();
+
+if(!numerosUnicos[clave]){
+
+numerosUnicos[clave] = {
+
+loterias: [],
+numero: j.numero,
+posicion: j.posicion,
+importe: Number(j.importe)
+
+};
+
+}
+
+numerosUnicos[clave].loterias.push(j.loteria);
+
+});
+
+// =========================
+// HEADER
+// =========================
+
+contenido +=
+`${'-'.repeat(31)}
+${lineaLoterias.trim()}
+${'-'.repeat(31)}
+`;
+
+// =========================
+// RENDER NUMEROS
+// =========================
+
+Object.values(numerosUnicos).forEach(j => {
+
+let numero = String(j.numero);
+
+if(numero.length === 3) numero = '*' + numero;
+if(numero.length === 2) numero = '**' + numero;
+if(numero.length === 1) numero = '***' + numero;
+
+const posicion =
+String(j.posicion).padStart(2,'0');
+
+const importe =
+Number(j.importe)
+.toLocaleString('es-AR') + ',00';
+
+let loteriasTexto = '';
+
+j.loterias.forEach(l => {
+
+let loteria = l
+.replace('NAC','N')
+.replace('PRO','P')
+.replace('SFE','S')
+.replace('COR','C')
+.replace('RIO','R')
+.replace('MZA','M')
+.replace('CTE','CT')
+.replace('ORO','O');
+
+loteriasTexto += loteria + ' ';
+
+});
+
+contenido +=
+numero.padEnd(8,' ') +
+posicion.padEnd(6,' ') +
+importe +
+'\n' +
+loteriasTexto.trim() +
+'\n\n';
+
+});
+
+});
+
+// =========================
+// GUARDAR FIREBASE
+// =========================
+
+try{
+
+await addDoc(collection(db, "tickets"), {
+
+ticket: numeroTicket,
+
+fecha: fecha,
+
+jugadas: jugadas
+
+});
+
+}catch(error){
+
+console.error(error);
+
+alert('Error al guardar online');
+
+return;
+
+}
+
+// =========================
+// IMPRIMIR
+// =========================
+
+const ventana =
+window.open('', '', 'width=350,height=700');
+
+ventana.document.write(`
+
+<html>
+
+<head>
+
+<title>Ticket</title>
+
+<style>
+
+@page{
+size:58mm auto;
+margin:0;
+}
+
+html,body{
+
+width:58mm;
+margin:0;
+padding:0;
+overflow:hidden;
+
+font-family:"Courier New", monospace;
+
+font-size:15px;
+
+font-weight:normal;
+
+}
+
+pre{
+
+margin:0;
+padding:2px;
+
+white-space:pre-wrap;
+
+line-height:1.05;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<pre>
+        TICKET: ${numeroTicket}
+
+${fecha.toLocaleDateString('es-AR')}      ${fecha.toLocaleTimeString('es-AR')}
+
+${contenido}
+-------------------------------
+TOTAL: ${total.toLocaleString('es-AR')},00
+</pre>
+
+</body>
+
+</html>
+
+`);
+
+ventana.document.close();
+
+ventana.focus();
+
+ventana.print();
+
+// =========================
+// LIMPIAR
+// =========================
+
+localStorage.removeItem('jugadas');
+
+window.location = 'enviadas.html';
+
+}
+
+// =========================
+// VOLVER
+// =========================
+
+function volver(){
+
+window.location = 'jugadas.html';
+
+}
+
+
+window.anular = anular;
+window.enviar = enviar;
+window.volver = volver;
+
+render();
+
+</script>
+
+</body>
+
+</html>

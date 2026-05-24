@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>Enviadas</title>
+
+<link rel="stylesheet" href="style.css">
+
+<style>
+
+body.modal-open{
+overflow:hidden;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="contenedor">
+
+<div class="contenido-enviadas">
+
+<h2 id="fechaHoy"></h2>
+
+<div class="buscador">
+
+<input
+type="text"
+id="inputFecha"
+placeholder="dd/mm/yyyy"
+>
+
+<button onclick="buscarFecha()">
+Buscar
+</button>
+
+<button onclick="cargar()">
+Hoy
+</button>
+
+</div>
+
+<table class="tabla">
+
+<thead>
+
+<tr>
+<th>Fecha</th>
+<th>Ticket</th>
+<th>Hora</th>
+<th>Importe</th>
+</tr>
+
+</thead>
+
+<tbody id="tablaTickets"></tbody>
+
+</table>
+
+<div class="volver">
+
+<button onclick="window.location='index.html'">
+VOLVER
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- MODAL -->
+<div id="modalTicket" style="
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:#000000cc;
+">
+
+<div style="
+background:white;
+width:85%;
+margin:40px auto;
+padding:20px;
+border-radius:10px;
+max-height:80vh;
+overflow:auto;
+">
+
+<h2>DETALLE DEL TICKET</h2>
+
+<table class="tabla">
+
+<thead>
+
+<tr>
+<th>Lotería</th>
+<th>Número</th>
+<th>Pos</th>
+<th>Importe</th>
+</tr>
+
+</thead>
+
+<tbody id="detalleTicket"></tbody>
+
+</table>
+
+<br>
+
+<button
+onclick="cerrarModal()"
+class="btn-cerrar"
+>
+Cerrar
+</button>
+
+</div>
+
+</div>
+
+<script type="module">
+
+// =====================
+// FIREBASE
+// =====================
+
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+getFirestore,
+collection,
+getDocs,
+query,
+orderBy
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// =====================
+// CONFIG
+// =====================
+
+const firebaseConfig = {
+
+apiKey: "AIzaSyA2y91gOWQX_Or_UNuilOhWmBVPS0vmQSE",
+
+authDomain: "quni-ba5f7.firebaseapp.com",
+
+projectId: "quni-ba5f7",
+
+storageBucket: "quni-ba5f7.firebasestorage.app",
+
+messagingSenderId: "140436996650",
+
+appId: "1:140436996650:web:044d67a93205b244f87953"
+
+};
+
+const app = initializeApp(firebaseConfig);
+
+const db = getFirestore(app);
+
+// =====================
+// VARIABLES
+// =====================
+
+let ticketsGlobal = [];
+
+// =====================
+// CARGAR TICKETS
+// =====================
+
+async function cargar(fechaFiltro = null){
+
+const tabla =
+document.getElementById('tablaTickets');
+
+tabla.innerHTML = '';
+
+const hoy =
+new Date().toLocaleDateString('es-AR');
+
+const fechaBuscada =
+fechaFiltro || hoy;
+
+document.getElementById('fechaHoy').innerText =
+'Fecha: ' + fechaBuscada;
+
+// traer tickets
+const q = query(
+collection(db, "tickets"),
+orderBy("fecha", "desc")
+);
+
+const snapshot = await getDocs(q);
+
+ticketsGlobal = [];
+
+snapshot.forEach((doc) => {
+
+const data = doc.data();
+
+const fechaObj = data.fecha.toDate();
+
+const fecha =
+fechaObj.toLocaleDateString('es-AR');
+
+const hora =
+fechaObj.toLocaleTimeString('es-AR');
+
+let total = 0;
+
+data.jugadas.forEach(j => {
+
+total += Number(j.importe);
+
+});
+
+ticketsGlobal.push({
+
+firebaseId: doc.id,
+
+ticket: data.ticket || 3000,
+
+fecha: fecha,
+
+hora: hora,
+
+total: total,
+
+jugadas: data.jugadas
+
+});
+
+});
+
+// =====================
+// FILTRAR
+// =====================
+
+const filtrados =
+ticketsGlobal.filter(
+t => t.fecha === fechaBuscada
+);
+
+// =====================
+// RENDER
+// =====================
+
+filtrados.forEach(t => {
+
+tabla.innerHTML += `
+<tr>
+
+<td>${t.fecha}</td>
+
+<td>
+<a href="#"
+onclick="verTicket('${t.firebaseId}')">
+#${t.ticket}
+</a>
+</td>
+
+<td>${t.hora}</td>
+
+<td>${t.total}</td>
+
+</tr>
+`;
+
+});
+
+}
+
+// =====================
+// BUSCAR
+// =====================
+
+function buscarFecha(){
+
+const fecha =
+document.getElementById('inputFecha').value;
+
+cargar(fecha);
+
+}
+
+// =====================
+// VER TICKET
+// =====================
+
+function verTicket(id){
+
+const ticket =
+ticketsGlobal.find(
+t => t.firebaseId === id
+);
+
+if(!ticket) return;
+
+const jugadas = ticket.jugadas;
+
+const tabla =
+document.getElementById('detalleTicket');
+
+tabla.innerHTML = '';
+
+let total = 0;
+
+// =====================
+// AGRUPAR
+// =====================
+
+let agrupadas = {};
+
+jugadas.forEach(j => {
+
+const clave =
+String(j.numero).trim() + '|' +
+String(j.posicion).trim() + '|' +
+String(j.importe).trim();
+
+if(!agrupadas[clave]){
+
+agrupadas[clave] = {
+
+loterias: [],
+
+numero: j.numero,
+
+posicion: j.posicion,
+
+importe: Number(j.importe)
+
+};
+
+}
+
+agrupadas[clave].loterias.push(j.loteria);
+
+});
+
+// =====================
+// RENDER
+// =====================
+
+Object.values(agrupadas).forEach(j => {
+
+total += Number(j.importe);
+
+tabla.innerHTML += `
+<tr>
+
+<td>
+${j.loterias.join(' ')}
+</td>
+
+<td>
+${j.numero}
+</td>
+
+<td>
+${j.posicion}
+</td>
+
+<td>
+${j.importe}
+</td>
+
+</tr>
+`;
+
+});
+
+// =====================
+// TOTAL
+// =====================
+
+tabla.innerHTML += `
+<tr>
+
+<td colspan="3">
+<b>TOTAL</b>
+</td>
+
+<td>
+<b>${total}</b>
+</td>
+
+</tr>
+`;
+
+document.getElementById('modalTicket').style.display =
+'block';
+
+document.body.classList.add('modal-open');
+
+}
+
+// =====================
+// CERRAR MODAL
+// =====================
+
+function cerrarModal(){
+
+document.getElementById('modalTicket').style.display =
+'none';
+
+document.body.classList.remove('modal-open');
+
+}
+
+// =====================
+// GLOBALES
+// =====================
+
+window.buscarFecha = buscarFecha;
+
+window.verTicket = verTicket;
+
+window.cerrarModal = cerrarModal;
+
+window.cargar = cargar;
+
+// =====================
+// INICIO
+// =====================
+
+cargar();
+
+</script>
+
+</body>
+
+</html>

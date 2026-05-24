@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Cargar Jugadas</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="contenedor">
+
+<div class="panel">
+    <div class="header-tiempo">
+    <div id="fechaHoy"></div>
+</div>
+
+<div class="filas-loterias">
+
+    <!-- PREVIA -->
+
+    <div class="grupo-horario">
+
+        <h2>PREVIA</h2>
+
+        <button class="loteria todas">
+            TODAS
+        </button>
+
+        <button class="loteria">NAC10</button>
+        <button class="loteria">PRO10</button>
+        <button class="loteria">SFE10</button>
+        <button class="loteria">COR10</button>
+        <button class="loteria">RIO10</button>
+        <button class="loteria">CTE10</button>
+        <button class="loteria">MZA10</button>
+
+    </div>
+
+    <!-- PRIMERA -->
+
+    <div class="grupo-horario">
+
+        <h2>MAÑANA</h2>
+
+        <button class="loteria todas">
+            TODAS
+        </button>
+
+        <button class="loteria">NAC12</button>
+        <button class="loteria">PRO12</button>
+        <button class="loteria">SFE12</button>
+        <button class="loteria">COR12</button>
+        <button class="loteria">RIO12</button>
+        <button class="loteria">CTE12</button>
+        <button class="loteria">MZA12</button>
+
+    </div>
+
+    <!-- MATUTINA -->
+
+    <div class="grupo-horario">
+
+        <h2>MATUTI</h2>
+
+        <button class="loteria todas">
+            TODAS
+        </button>
+
+        <button class="loteria">NAC15</button>
+        <button class="loteria">PRO15</button>
+        <button class="loteria">SFE15</button>
+        <button class="loteria">COR15</button>
+        <button class="loteria">RIO15</button>
+        <button class="loteria">CTE15</button>
+        <button class="loteria">MZA15</button>
+        <button class="loteria">ORO15</button>
+
+    </div>
+
+    <!-- VESPERTINA -->
+
+    <div class="grupo-horario">
+
+        <h2>VESPERT</h2>
+
+        <button class="loteria todas">
+            TODAS
+        </button>
+
+        <button class="loteria">NAC17</button>
+        <button class="loteria">PRO17</button>
+        <button class="loteria">SFE17</button>
+        <button class="loteria">COR17</button>
+        <button class="loteria">RIO17</button>
+        <button class="loteria">CTE17</button>
+        <button class="loteria">MZA17</button>
+
+    </div>
+
+    <!-- NOCTURNA -->
+
+    <div class="grupo-horario">
+
+        <h2>NOCHE</h2>
+
+        <button class="loteria todas">
+            TODAS
+        </button>
+
+        <button class="loteria">NAC21</button>
+        <button class="loteria">PRO21</button>
+        <button class="loteria">SFE21</button>
+        <button class="loteria">COR21</button>
+        <button class="loteria">RIO21</button>
+        <button class="loteria">CTE21</button>
+        <button class="loteria">MZA21</button>
+        <button class="loteria">ORO21</button>
+
+    </div>
+
+</div>
+
+
+<div class="inputs">
+
+<div class="campo">
+<label>Número</label>
+<input type="text" id="numero">
+</div>
+
+<div class="campo">
+<label>Pos.</label>
+<input type="text" id="posicion" value="1">
+</div>
+
+<div class="campo">
+<label>Importe</label>
+<input type="text" id="importe">
+</div>
+
+</div>
+
+
+<div class="botones">
+<button onclick="agregarJugada()">OTRA</button>
+<button onclick="irARevision()">FINALIZAR</button>
+<button onclick="window.location='index.html'">VOLVER</button>
+</div>
+<div class="info-ticket">
+<div class="info-ticket">
+
+    <h1>
+        Ticket:
+        <span id="ticket">0</span>
+    </h1>
+
+    <h1>
+        Total:
+        <span id="total">0</span>
+    </h1>
+
+
+</div>
+
+</div>
+
+<script type="module" src="script.js"></script>
+</body>
+</html>
