@@ -55,6 +55,9 @@ iniciarEnter();
 
 actualizarDisponibles();
 
+// Revisar los horarios cada 30 segundos
+setInterval(actualizarDisponibles, 30000);
+
 mostrarFechaYHora();
 
 setInterval(mostrarFechaYHora, 1000);
@@ -380,6 +383,8 @@ function actualizarDisponibles(){
 
 const ahora = new Date();
 
+const esSabado = ahora.getDay() === 6;
+
 const horaActual =
 ahora.getHours();
 
@@ -399,42 +404,47 @@ let limiteHora = 0;
 let limiteMin = 0;
 
 if(titulo === 'PREVIA'){
-
 limiteHora = 10;
 limiteMin = 15;
-
 }
 
 if(titulo === 'MAÑANA'){
-
 limiteHora = 12;
 limiteMin = 0;
-
 }
 
 if(titulo === 'MATUTI'){
-
 limiteHora = 15;
 limiteMin = 0;
-
 }
 
 if(titulo === 'VESPERT'){
-
-limiteHora = 18;
+limiteHora = 17;
 limiteMin = 0;
-
 }
 
 if(titulo === 'NOCHE'){
-
 limiteHora = 21;
 limiteMin = 0;
-
 }
 
 const botones =
 grupo.querySelectorAll('.loteria');
+
+botones.forEach(btn => {
+
+const nombre = btn.innerText.trim();
+
+// ORO15 deshabilitado todo el sábado
+if(esSabado && nombre === 'ORO15'){
+
+btn.disabled = true;
+btn.style.opacity = "0.3";
+btn.style.pointerEvents = "none";
+
+return;
+
+}
 
 const bloqueado =
 horaActual > limiteHora ||
@@ -445,22 +455,17 @@ minutosActual > limiteMin
 
 if(bloqueado){
 
-botones.forEach(btn => {
-
 btn.disabled = true;
-
 btn.style.opacity = "0.3";
-
 btn.style.pointerEvents = "none";
 
-});
-
 }
 
 });
 
-}
+});
 
+}
 // =========================
 // FECHA Y HORA
 // =========================
