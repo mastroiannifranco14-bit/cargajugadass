@@ -29,11 +29,19 @@ overflow:hidden;
 
 <div class="buscador">
 
-<input type="text" id="inputFecha" placeholder="dd/mm/yyyy">
+<input
+type="text"
+id="inputFecha"
+placeholder="dd/mm/yyyy"
+>
 
-<button onclick="buscarFecha()">Buscar</button>
+<button onclick="buscarFecha()">
+Buscar
+</button>
 
-<button onclick="cargar()">Hoy</button>
+<button onclick="cargar()">
+Hoy
+</button>
 
 </div>
 
@@ -56,7 +64,9 @@ overflow:hidden;
 
 <div class="volver">
 
-<button onclick="window.location='index.html'">VOLVER</button>
+<button onclick="window.location='index.html'">
+VOLVER
+</button>
 
 </div>
 
@@ -106,11 +116,19 @@ overflow:auto;
 
 <br>
 
-<button onclick="reimprimirTicket()" class="btn-cerrar">
-Reimprimir
+<button
+onclick="reimprimirTicket()"
+>
+REIMPRIMIR
 </button>
 
-<button onclick="cerrarModal()" class="btn-cerrar">
+<button
+onclick="cerrarModal()"
+class="btn-cerrar"
+>
+Cerrar
+</button>
+>
 Cerrar
 </button>
 
@@ -120,37 +138,79 @@ Cerrar
 
 <script type="module">
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+// =====================
+// FIREBASE
+// =====================
+
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+getFirestore,
+collection,
+getDocs,
+query,
+orderBy
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// =====================
+// CONFIG
+// =====================
 
 const firebaseConfig = {
 
-apiKey: "AIzaSyA2y91gOWX_Or_UNuilOhWmBVPS0vmQSE",
+apiKey: "AIzaSyA2y91gOWQX_Or_UNuilOhWmBVPS0vmQSE",
+
 authDomain: "quni-ba5f7.firebaseapp.com",
+
 projectId: "quni-ba5f7",
+
 storageBucket: "quni-ba5f7.firebasestorage.app",
+
 messagingSenderId: "140436996650",
+
 appId: "1:140436996650:web:044d67a93205b244f87953"
 
 };
 
 const app = initializeApp(firebaseConfig);
+
 const db = getFirestore(app);
+
+// =====================
+// VARIABLES
+// =====================
 
 let ticketsGlobal = [];
 let ticketActual = null;
 
+// =====================
+// CARGAR TICKETS
+// =====================
+
 async function cargar(fechaFiltro = null){
 
-const tabla = document.getElementById('tablaTickets');
+const tabla =
+document.getElementById('tablaTickets');
+
 tabla.innerHTML = '';
 
-const hoy = new Date().toLocaleDateString('es-AR');
-const fechaBuscada = fechaFiltro || hoy;
+const hoy =
+new Date().toLocaleDateString('es-AR');
 
-document.getElementById('fechaHoy').innerText = 'Fecha: ' + fechaBuscada;
+const fechaBuscada =
+fechaFiltro || hoy;
 
-const q = query(collection(db, "tickets"), orderBy("fecha", "desc"));
+document.getElementById('fechaHoy').innerText =
+'Fecha: ' + fechaBuscada;
+
+// traer tickets
+const q = query(
+collection(db, "tickets"),
+orderBy("fecha", "desc")
+);
+
 const snapshot = await getDocs(q);
 
 ticketsGlobal = [];
@@ -158,33 +218,72 @@ ticketsGlobal = [];
 snapshot.forEach((doc) => {
 
 const data = doc.data();
+
 const fechaObj = data.fecha.toDate();
+
+const fecha =
+fechaObj.toLocaleDateString('es-AR');
+
+const hora =
+fechaObj.toLocaleTimeString('es-AR');
+
+let total = 0;
+
+data.jugadas.forEach(j => {
+
+total += Number(j.importe);
+
+});
 
 ticketsGlobal.push({
 
 firebaseId: doc.id,
-ticket: data.ticket,
-fecha: fechaObj.toLocaleDateString('es-AR'),
-hora: fechaObj.toLocaleTimeString('es-AR'),
+
+ticket: data.ticket || 3000,
+
+fecha: fecha,
+
+hora: hora,
+
+total: total,
+
 jugadas: data.jugadas
 
 });
 
 });
 
-const filtrados = ticketsGlobal.filter(t => t.fecha === fechaBuscada);
+// =====================
+// FILTRAR
+// =====================
+
+const filtrados =
+ticketsGlobal.filter(
+t => t.fecha === fechaBuscada
+);
+
+// =====================
+// RENDER
+// =====================
 
 filtrados.forEach(t => {
 
-let total = 0;
-t.jugadas.forEach(j => total += Number(j.importe));
-
 tabla.innerHTML += `
 <tr>
+
 <td>${t.fecha}</td>
-<td><a href="#" onclick="verTicket('${t.firebaseId}')">#${t.ticket}</a></td>
+
+<td>
+<a href="#"
+onclick="verTicket('${t.firebaseId}')">
+#${t.ticket}
+</a>
+</td>
+
 <td>${t.hora}</td>
-<td>${total}</td>
+
+<td>${t.total}</td>
+
 </tr>
 `;
 
@@ -192,36 +291,67 @@ tabla.innerHTML += `
 
 }
 
+// =====================
+// BUSCAR
+// =====================
+
 function buscarFecha(){
-const fecha = document.getElementById('inputFecha').value;
+
+const fecha =
+document.getElementById('inputFecha').value;
+
 cargar(fecha);
+
 }
+
+// =====================
+// VER TICKET
+// =====================
 
 function verTicket(id){
 
-const ticket = ticketsGlobal.find(t => t.firebaseId === id);
-if(!ticket) return;
+const ticket =
+ticketsGlobal.find(
+t => t.firebaseId === id
+);
 
+if(!ticket) return;
 ticketActual = ticket;
 
-const tabla = document.getElementById('detalleTicket');
+const jugadas = ticket.jugadas;
+
+const tabla =
+document.getElementById('detalleTicket');
+
 tabla.innerHTML = '';
 
 let total = 0;
 
+// =====================
+// AGRUPAR
+// =====================
+
 let agrupadas = {};
 
-ticket.jugadas.forEach(j => {
+jugadas.forEach(j => {
 
-const clave = j.numero + '|' + j.posicion + '|' + j.importe;
+const clave =
+String(j.numero).trim() + '|' +
+String(j.posicion).trim() + '|' +
+String(j.importe).trim();
 
 if(!agrupadas[clave]){
 
 agrupadas[clave] = {
+
 loterias: [],
+
 numero: j.numero,
+
 posicion: j.posicion,
+
 importe: Number(j.importe)
+
 };
 
 }
@@ -230,88 +360,157 @@ agrupadas[clave].loterias.push(j.loteria);
 
 });
 
+// =====================
+// RENDER
+// =====================
+
 Object.values(agrupadas).forEach(j => {
 
-total += j.importe;
+total += Number(j.importe);
 
 tabla.innerHTML += `
 <tr>
-<td>${j.loterias.join(' ')}</td>
-<td>${j.numero}</td>
-<td>${j.posicion}</td>
-<td>${j.importe}</td>
+
+<td>
+${j.loterias.join(' ')}
+</td>
+
+<td>
+${j.numero}
+</td>
+
+<td>
+${j.posicion}
+</td>
+
+<td>
+${j.importe}
+</td>
+
 </tr>
 `;
 
 });
 
+// =====================
+// TOTAL
+// =====================
+
 tabla.innerHTML += `
 <tr>
-<td colspan="3"><b>TOTAL</b></td>
-<td><b>${total}</b></td>
+
+<td colspan="3">
+<b>TOTAL</b>
+</td>
+
+<td>
+<b>${total}</b>
+</td>
+
 </tr>
 `;
 
-document.getElementById('modalTicket').style.display = 'block';
+document.getElementById('modalTicket').style.display =
+'block';
+
 document.body.classList.add('modal-open');
 
 }
 
 function reimprimirTicket(){
 
-if(!ticketActual) return;
+if(!ticketActual){
+alert("No hay ticket seleccionado");
+return;
+}
 
-const fecha = new Date();
+const ticket = ticketActual;
 
 let contenido = '';
+
 let total = 0;
 
-ticketActual.jugadas.forEach(j => {
+let loteriasUnicas = [];
+
+ticket.jugadas.forEach(j=>{
+
 total += Number(j.importe);
+
+let loteria = String(j.loteria)
+.replace('NAC','N')
+.replace('PRO','P')
+.replace('SFE','S')
+.replace('COR','C')
+.replace('RIO','R')
+.replace('MZA','M')
+.replace('CTE','CT')
+.replace('ORO','O');
+
+if(!loteriasUnicas.includes(loteria)){
+loteriasUnicas.push(loteria);
+}
+
 });
 
-contenido += `-------------------------------\n`;
-contenido += `REIMPRESIÓN\n`;
-contenido += `-------------------------------\n\n`;
 
-ticketActual.jugadas.forEach(j => {
+contenido += `${loteriasUnicas.join(' ')}
+-------------------------------
+
+`;
+
+ticket.jugadas.forEach(j=>{
 
 let numero = String(j.numero);
+
 if(numero.length === 3) numero = '*' + numero;
 if(numero.length === 2) numero = '**' + numero;
 if(numero.length === 1) numero = '***' + numero;
 
-const pos = String(j.posicion).padStart(2,'0');
-const imp = Number(j.importe).toLocaleString('es-AR') + ',00';
-
-contenido += `${numero.padEnd(8,' ')}${pos.padEnd(6,' ')}${imp}\n${j.loteria}\n\n`;
+contenido +=
+numero +
+"  " +
+String(j.posicion).padStart(2,'0') +
+"  " +
+Number(j.importe).toLocaleString('es-AR') +
+",00\n";
 
 });
 
-const w = window.open('', '', 'width=350,height=700');
 
-w.document.write(`
+const ventana =
+window.open('', '', 'width=350,height=700');
+
+
+ventana.document.write(`
+
 <html>
+
 <head>
-<title>REIMPRESIÓN</title>
 
 <style>
 
-@page { size:58mm auto; margin:0; }
+@page{
+size:58mm auto;
+margin:0;
+}
 
 html,body{
+
 width:58mm;
 margin:0;
 padding:0;
+
 font-family:"Courier New", monospace;
 font-size:15px;
+
 }
 
 pre{
-white-space:pre-wrap;
+
 margin:0;
 padding:2px;
-line-height:1.05;
+white-space:pre-wrap;
+
 }
 
 </style>
@@ -321,38 +520,71 @@ line-height:1.05;
 <body>
 
 <pre>
-TICKET: ${ticketActual.ticket}
 
-${fecha.toLocaleDateString('es-AR')} ${fecha.toLocaleTimeString('es-AR')}
+        REIMPRESION
+
+        TICKET: ${ticket.ticket}
+
+${ticket.fecha}     ${ticket.hora}
+
+-------------------------------
 
 ${contenido}
+
 -------------------------------
 TOTAL: ${total.toLocaleString('es-AR')},00
+
 </pre>
 
 </body>
+
 </html>
+
 `);
 
-w.document.close();
-w.print();
+ventana.document.close();
+
+ventana.focus();
+
+ventana.print();
 
 }
+
+// =====================
+// CERRAR MODAL
+// =====================
 
 function cerrarModal(){
-document.getElementById('modalTicket').style.display = 'none';
+
+document.getElementById('modalTicket').style.display =
+'none';
+
 document.body.classList.remove('modal-open');
+
 }
 
+// =====================
+// GLOBALES
+// =====================
+
 window.buscarFecha = buscarFecha;
+
 window.verTicket = verTicket;
+
 window.cerrarModal = cerrarModal;
+
 window.cargar = cargar;
+
 window.reimprimirTicket = reimprimirTicket;
+
+// =====================
+// INICIO
+// =====================
 
 cargar();
 
 </script>
 
 </body>
+
 </html>
